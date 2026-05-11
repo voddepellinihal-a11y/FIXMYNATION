@@ -1,38 +1,68 @@
 import { useState } from "react";
 
-function Login() {
+export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   const login = async () => {
-    const res = await fetch(
-      `http://127.0.0.1:8000/login?email=${email}&password=${password}`,
-      { method: "POST" }
-    );
+    const formData = new FormData();
+
+    formData.append("email", email);
+    formData.append("password", password);
+
+    const res = await fetch("http://127.0.0.1:8000/login", {
+      method: "POST",
+      body: formData,
+    });
 
     const data = await res.json();
-    localStorage.setItem("token", data.access_token);
 
-    alert("✅ Login successful");
+    if (data.access_token) {
+      localStorage.setItem("token", data.access_token);
+      localStorage.setItem("role", data.role);
+
+      if (data.role === "admin") {
+        window.location.href = "/admin";
+      } else {
+        window.location.href = "/dashboard";
+      }
+    } else {
+      alert("Invalid credentials ❌");
+    }
   };
 
   return (
-    <div className="p-10 max-w-md mx-auto bg-white rounded-xl shadow">
-      <h2 className="text-2xl font-bold mb-4 text-navyBlue">Login</h2>
+    <div className="min-h-screen flex justify-center items-start pt-10 bg-gradient-to-r from-orange-300 via-white to-green-400">
 
-      <input placeholder="Email" className="w-full p-3 border mb-3"
-        onChange={(e) => setEmail(e.target.value)} />
+      <div className="bg-white shadow-xl rounded-xl p-12 w-[550px]">
 
-      <input type="password" placeholder="Password"
-        className="w-full p-3 border mb-3"
-        onChange={(e) => setPassword(e.target.value)} />
+        <h1 className="text-5xl font-bold text-center mb-10 text-blue-900">
+          Login
+        </h1>
 
-      <button onClick={login}
-        className="bg-navyBlue text-white w-full py-3 rounded">
-        Login
-      </button>
+        <input
+          type="email"
+          placeholder="Email"
+          className="w-full border p-4 rounded-lg mb-6 text-lg"
+          onChange={(e) => setEmail(e.target.value)}
+        />
+
+        <input
+          type="password"
+          placeholder="Password"
+          className="w-full border p-4 rounded-lg mb-8 text-lg"
+          onChange={(e) => setPassword(e.target.value)}
+        />
+
+        <button
+          onClick={login}
+          className="w-full bg-blue-700 hover:bg-blue-800 text-white py-4 rounded-lg text-xl"
+        >
+          Login
+        </button>
+
+      </div>
+
     </div>
   );
 }
-
-export default Login;

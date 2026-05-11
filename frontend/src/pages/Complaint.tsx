@@ -1,133 +1,120 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function Complaint() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [location, setLocation] = useState<any>(null);
-  const [file, setFile] = useState<any>(null);
+  const [lat, setLat] = useState("");
+  const [lng, setLng] = useState("");
+  const [file, setFile] = useState<File | null>(null);
 
-  // 📍 GET LOCATION
+  const role = localStorage.getItem("role");
+
+  useEffect(() => {
+    if (!localStorage.getItem("token")) {
+      alert("Please login first ❌");
+      window.location.href = "/login";
+    }
+  }, []);
+
   const getLocation = () => {
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setLocation({
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude,
-        });
-        alert("Location captured ✅");
-      },
-      () => alert("Location denied ❌")
-    );
+    navigator.geolocation.getCurrentPosition((position) => {
+      setLat(position.coords.latitude.toString());
+      setLng(position.coords.longitude.toString());
+    });
   };
 
-  // 🚀 SUBMIT
   const submitComplaint = async () => {
-    console.log("SUBMIT CLICKED");
+    const formData = new FormData();
 
-    if (!title || !description) {
-      alert("Fill all fields ❗");
-      return;
+    formData.append("title", title);
+    formData.append("description", description);
+    formData.append("lat", lat);
+    formData.append("lng", lng);
+
+    if (file) {
+      formData.append("file", file);
     }
 
-    if (!location) {
-      alert("Get location first 📍");
-      return;
-    }
+    const res = await fetch("http://127.0.0.1:8000/complaint", {
+      method: "POST",
+      body: formData,
+    });
 
-    try {
-      const formData = new FormData();
-      formData.append("title", title);
-      formData.append("description", description);
-      formData.append("lat", location.lat.toString());
-      formData.append("lng", location.lng.toString());
+    const data = await res.json();
 
-      // ✅ SAFE FILE UPLOAD
-      if (file) {
-        formData.append("file", file);
-      }
+    alert(data.message || "Complaint Submitted ✅");
 
-      const res = await fetch("http://127.0.0.1:8000/complaint", {
-        method: "POST",
-        body: formData,
-      });
-
-      // 🔥 HANDLE ERROR PROPERLY
-      if (!res.ok) {
-        const text = await res.text();
-        console.error("SERVER ERROR:", text);
-        alert("Server error ❌");
-        return;
-      }
-
-      const data = await res.json();
-      console.log("SUCCESS:", data);
-
-      alert("Complaint Submitted ✅");
-
-      // RESET FORM
-      setTitle("");
-      setDescription("");
-      setLocation(null);
-      setFile(null);
-
-    } catch (err) {
-      console.error("FETCH ERROR:", err);
-      alert("Network error ❌");
-    }
+    window.location.href = "/dashboard";
   };
 
   return (
-    <div className="flex justify-center mt-10">
-      <div className="bg-white p-8 rounded-xl shadow-lg w-[500px]">
+    <div className="min-h-screen bg-gradient-to-r from-orange-300 via-white to-green-400 flex justify-center items-start pt-10">
 
-        <h2 className="text-2xl font-bold mb-6">📢 Complaint</h2>
+      <div className="bg-white shadow-xl rounded-xl p-10 w-[650px]">
 
-        {/* TITLE */}
+        {/* ROLE */}
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-4xl font-bold text-blue-900">
+            📢 File Complaint
+          </h1>
+
+          <div className="bg-blue-100 text-blue-800 px-4 py-2 rounded-full font-semibold">
+            Logged in as: {role}
+          </div>
+        </div>
+
         <input
-          value={title}
-          className="w-full p-3 border mb-4 rounded"
-          placeholder="Title"
+          type="text"
+          placeholder="Complaint Title"
+          className="w-full border p-4 rounded-lg mb-5 text-lg"
           onChange={(e) => setTitle(e.target.value)}
         />
 
-        {/* DESCRIPTION */}
         <textarea
-          value={description}
-          className="w-full p-3 border mb-4 rounded"
-          placeholder="Description"
+          placeholder="Complaint Description"
+          className="w-full border p-4 rounded-lg mb-5 text-lg h-36"
           onChange={(e) => setDescription(e.target.value)}
         />
 
         {/* LOCATION */}
         <button
           onClick={getLocation}
-          className="bg-green-600 text-white px-4 py-2 rounded mb-4"
+          className="w-full bg-green-600 hover:bg-green-700 text-white py-4 rounded-lg text-lg mb-4"
         >
           📍 Get Location
         </button>
 
-        {location && (
-          <p className="text-sm mb-4">
-            📍 {location.lat}, {location.lng}
-          </p>
+        {lat && (
+          <div className="mb-5 text-lg">
+            📍 {lat}, {lng}
+          </div>
         )}
 
-        {/* IMAGE */}
-        <input
-          type="file"
-          className="mb-4"
-          onChange={(e: any) => setFile(e.target.files[0])}
-        />
+        {/* FILE */}
+        <div className="mb-6">
+          <label className="font-semibold text-lg">
+            Upload Issue Image:
+          </label>
+
+          <input
+            type="file"
+            className="w-full mt-2 border p-3 rounded-lg"
+            onChange={(e) =>
+              e.target.files && setFile(e.target.files[0])
+            }
+          />
+        </div>
 
         {/* SUBMIT */}
         <button
           onClick={submitComplaint}
-          className="w-full bg-blue-900 text-white p-3 rounded-lg hover:scale-105 transition"
+          className="w-full bg-blue-700 hover:bg-blue-800 text-white py-4 rounded-lg text-xl font-semibold"
         >
           🚀 Submit Complaint
         </button>
 
       </div>
+
     </div>
   );
 }
