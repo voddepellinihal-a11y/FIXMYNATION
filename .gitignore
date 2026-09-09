@@ -46,3 +46,6 @@ Thumbs.db
 .coverage
 htmlcov/
 .pytest_cache/
+
+# Installer files
+*.msi
