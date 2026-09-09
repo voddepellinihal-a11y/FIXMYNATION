@@ -1,0 +1,48 @@
+# Node
+node_modules/
+frontend/node_modules/
+
+# React/Vite build
+frontend/dist/
+dist/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+.venv/
+venv/
+env/
+backend/.venv/
+
+# Database
+backend/database.db
+*.db
+
+# Uploaded files
+backend/uploads/
+uploads/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# IDE
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Coverage
+.coverage
+htmlcov/
+.pytest_cache/
