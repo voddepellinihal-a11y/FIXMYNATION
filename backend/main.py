@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import create_engine, Column, Integer, String, Float
 from sqlalchemy.orm import sessionmaker, declarative_base, Session
+from pathlib import Path
 import shutil
 import os
 
@@ -17,8 +18,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# UPLOADS DIRECTORY - use path relative to this file for CI robustness
+UPLOADS_DIR = Path(__file__).resolve().parent / "uploads"
+UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+
 # STATIC FILES
-app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+app.mount("/uploads", StaticFiles(directory=str(UPLOADS_DIR)), name="uploads")
 
 # DATABASE
 engine = create_engine("sqlite:///./database.db", connect_args={"check_same_thread": False})
@@ -48,10 +53,6 @@ def get_db():
     finally:
         db.close()
 
-# CREATE UPLOAD FOLDER
-if not os.path.exists("uploads"):
-    os.makedirs("uploads")
-
 # CREATE COMPLAINT
 @app.post("/complaint")
 def create_complaint(
@@ -67,7 +68,7 @@ def create_complaint(
     filename = None
 
     if file:
-        filepath = f"uploads/{file.filename}"
+        filepath = str(UPLOADS_DIR / file.filename)
         with open(filepath, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
         filename = filepath
@@ -108,7 +109,7 @@ def upload_done(complaint_id: int, file: UploadFile = File(...), db: Session = D
     if not complaint:
         raise HTTPException(status_code=404, detail="Complaint not found")
 
-    filepath = f"uploads/done_{file.filename}"
+    filepath = str(UPLOADS_DIR / f"done_{file.filename}")
     with open(filepath, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
