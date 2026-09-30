@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 interface Complaint {
   id: number;
@@ -24,13 +24,6 @@ export default function Admin() {
   const [stats, setStats] = useState<Stats>({ total: 0, pending: 0, inProgress: 0, resolved: 0 });
   const [isAdmin, setIsAdmin] = useState(false);
 
-  const load = async () => {
-    const res = await fetch("http://127.0.0.1:8000/complaints");
-    const complaints: Complaint[] = await res.json();
-    setData(complaints);
-    calculateStats(complaints);
-  };
-
   const calculateStats = (complaints: Complaint[]) => {
     setStats({
       total: complaints.length,
@@ -39,6 +32,13 @@ export default function Admin() {
       resolved: complaints.filter(c => c.status === "Resolved").length,
     });
   };
+
+  const load = useCallback(async () => {
+    const res = await fetch("http://127.0.0.1:8000/complaints");
+    const complaints: Complaint[] = await res.json();
+    setData(complaints);
+    calculateStats(complaints);
+  }, []);
 
   useEffect(() => {
     const checkAdmin = () => {
@@ -59,7 +59,7 @@ export default function Admin() {
       }
     };
     checkAdmin();
-  }, []);
+  }, [load]);
 
   const updateStatus = async (id: number, status: string) => {
     await fetch(`http://127.0.0.1:8000/update-status/${id}`, {
