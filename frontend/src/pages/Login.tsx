@@ -12,13 +12,15 @@ function Login() {
 
     const data = await res.json();
     localStorage.setItem("token", data.access_token);
+    localStorage.setItem("user", JSON.stringify({ email }));
 
     alert("✅ Login successful");
+    window.location.href = "/profile";
   };
 
   return (
     <div className="p-10 max-w-md mx-auto bg-white rounded-xl shadow">
-      <h2 className="text-2xl font-bold mb-4 text-navyBlue">Login</h2>
+      <h2 className="text-2xl font-bold mb-4 text-blue-900">Login</h2>
 
       <input placeholder="Email" className="w-full p-3 border mb-3"
         onChange={(e) => setEmail(e.target.value)} />
@@ -28,7 +30,7 @@ function Login() {
         onChange={(e) => setPassword(e.target.value)} />
 
       <button onClick={login}
-        className="bg-navyBlue text-white w-full py-3 rounded">
+        className="bg-blue-900 text-white w-full py-3 rounded">
         Login
       </button>
     </div>

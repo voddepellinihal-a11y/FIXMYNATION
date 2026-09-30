@@ -4,8 +4,11 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Complaint from "./pages/Complaint";
+import Profile from "./pages/Profile";
 
 function Navbar() {
+  const token = localStorage.getItem("token");
+
   return (
     <div className="fixed top-0 left-0 w-full z-50 bg-white shadow-md">
 
@@ -18,13 +21,31 @@ function Navbar() {
         <div className="flex gap-6 items-center">
           <Link to="/" className="hover:text-orange-500">Home</Link>
           <Link to="/dashboard" className="hover:text-green-600">Dashboard</Link>
-          <Link to="/login">Login</Link>
 
-          <Link to="/register">
-            <button className="bg-orange-500 text-white px-4 py-2 rounded-lg">
-              Register
-            </button>
-          </Link>
+          {token ? (
+            <>
+              <Link to="/profile" className="hover:text-blue-600">Profile</Link>
+              <button
+                onClick={() => {
+                  localStorage.removeItem("token");
+                  localStorage.removeItem("user");
+                  window.location.href = "/login";
+                }}
+                className="bg-red-500 text-white px-4 py-2 rounded-lg"
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <Link to="/login">Login</Link>
+              <Link to="/register">
+                <button className="bg-orange-500 text-white px-4 py-2 rounded-lg">
+                  Register
+                </button>
+              </Link>
+            </>
+          )}
         </div>
 
       </div>
@@ -50,6 +71,7 @@ export default function App(){
             <Route path="/register" element={<Register/>}/>
             <Route path="/complaint" element={<Complaint/>}/>
             <Route path="/dashboard" element={<Dashboard/>}/>
+            <Route path="/profile" element={<Profile/>}/>
           </Routes>
         </div>
 
