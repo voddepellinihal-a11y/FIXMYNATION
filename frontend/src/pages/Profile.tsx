@@ -1,13 +1,35 @@
 import { useState, useEffect } from "react";
 
+interface User {
+  email: string;
+}
+
+interface Complaint {
+  id: number;
+  title: string;
+  description: string;
+  latitude: number;
+  longitude: number;
+  status?: string;
+}
+
+const getInitialUser = (): User | null => {
+  const userData = localStorage.getItem("user");
+  if (!userData) return null;
+  try {
+    return JSON.parse(userData) as User;
+  } catch {
+    return null;
+  }
+};
+
 export default function Profile() {
-  const [user, setUser] = useState<any>(null);
-  const [complaints, setComplaints] = useState<any[]>([]);
+  const [user, setUser] = useState<User | null>(getInitialUser);
+  const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [activeTab, setActiveTab] = useState<"info" | "complaints">("info");
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    const userData = localStorage.getItem("user");
 
     if (!token) {
       alert("Please login first");
@@ -15,18 +37,15 @@ export default function Profile() {
       return;
     }
 
-    if (userData) {
-      setUser(JSON.parse(userData));
-    }
-
     fetch("http://127.0.0.1:8000/complaints")
       .then((res) => res.json())
-      .then((data) => setComplaints(data));
+      .then((data: Complaint[]) => setComplaints(data));
   }, []);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    setUser(null);
     window.location.href = "/login";
   };
 
@@ -110,7 +129,7 @@ export default function Profile() {
                 <p className="text-center text-gray-500 py-8">No complaints submitted yet</p>
               ) : (
                 <div className="space-y-4">
-                  {complaints.map((c: any) => (
+                  {complaints.map((c: Complaint) => (
                     <div
                       key={c.id}
                       className="border rounded-lg p-4 hover:shadow-md transition"
