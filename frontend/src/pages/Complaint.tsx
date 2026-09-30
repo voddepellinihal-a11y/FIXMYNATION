@@ -1,10 +1,22 @@
 import { useState } from "react";
+import type { ChangeEvent } from "react";
+
+interface Location {
+  lat: number;
+  lng: number;
+}
+
+interface FileInputEvent extends ChangeEvent<HTMLInputElement> {
+  target: HTMLInputElement & {
+    files: FileList | null;
+  };
+}
 
 export default function Complaint() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [location, setLocation] = useState<any>(null);
-  const [file, setFile] = useState<any>(null);
+  const [location, setLocation] = useState<Location | null>(null);
+  const [file, setFile] = useState<File | null>(null);
 
   // 📍 GET LOCATION
   const getLocation = () => {
@@ -116,7 +128,7 @@ export default function Complaint() {
         <input
           type="file"
           className="mb-4"
-          onChange={(e: any) => setFile(e.target.files[0])}
+          onChange={(e: FileInputEvent) => setFile(e.target.files?.[0] ?? null)}
         />
 
         {/* SUBMIT */}
