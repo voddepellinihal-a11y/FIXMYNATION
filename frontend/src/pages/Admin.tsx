@@ -1,10 +1,44 @@
 import { useEffect, useState } from "react";
 
+interface Complaint {
+  id: number;
+  title: string;
+  description: string;
+  latitude: number;
+  longitude: number;
+  image?: string;
+  done_image?: string;
+  status?: string;
+}
+
+interface Stats {
+  total: number;
+  pending: number;
+  inProgress: number;
+  resolved: number;
+}
+
 export default function Admin() {
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<Complaint[]>([]);
   const [selectedImg, setSelectedImg] = useState<string | null>(null);
-  const [stats, setStats] = useState({ total: 0, pending: 0, inProgress: 0, resolved: 0 });
+  const [stats, setStats] = useState<Stats>({ total: 0, pending: 0, inProgress: 0, resolved: 0 });
   const [isAdmin, setIsAdmin] = useState(false);
+
+  const load = async () => {
+    const res = await fetch("http://127.0.0.1:8000/complaints");
+    const complaints: Complaint[] = await res.json();
+    setData(complaints);
+    calculateStats(complaints);
+  };
+
+  const calculateStats = (complaints: Complaint[]) => {
+    setStats({
+      total: complaints.length,
+      pending: complaints.filter(c => c.status === "Submitted" || c.status === "Pending").length,
+      inProgress: complaints.filter(c => c.status === "In Progress").length,
+      resolved: complaints.filter(c => c.status === "Resolved").length,
+    });
+  };
 
   useEffect(() => {
     const checkAdmin = () => {
@@ -26,22 +60,6 @@ export default function Admin() {
     };
     checkAdmin();
   }, []);
-
-  const load = async () => {
-    const res = await fetch("http://127.0.0.1:8000/complaints");
-    const complaints = await res.json();
-    setData(complaints);
-    calculateStats(complaints);
-  };
-
-  const calculateStats = (complaints: any[]) => {
-    setStats({
-      total: complaints.length,
-      pending: complaints.filter(c => c.status === "Submitted" || c.status === "Pending").length,
-      inProgress: complaints.filter(c => c.status === "In Progress").length,
-      resolved: complaints.filter(c => c.status === "Resolved").length,
-    });
-  };
 
   const updateStatus = async (id: number, status: string) => {
     await fetch(`http://127.0.0.1:8000/update-status/${id}`, {
@@ -105,7 +123,7 @@ export default function Admin() {
           <h3 className="text-lg font-semibold">All Complaints</h3>
         </div>
         <div className="divide-y">
-          {data.map((c) => {
+          {data.map((c: Complaint) => {
             const before = c.image && `http://127.0.0.1:8000/uploads/${c.image}`;
             const after = c.done_image && `http://127.0.0.1:8000/uploads/${c.done_image}`;
 
