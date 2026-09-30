@@ -17,6 +17,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# ENSURE UPLOADS DIRECTORY EXISTS BEFORE MOUNTING
+if not os.path.exists("uploads"):
+    os.makedirs("uploads")
+
 # STATIC FILES
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
@@ -47,10 +51,6 @@ def get_db():
         yield db
     finally:
         db.close()
-
-# CREATE UPLOAD FOLDER
-if not os.path.exists("uploads"):
-    os.makedirs("uploads")
 
 # CREATE COMPLAINT
 @app.post("/complaint")

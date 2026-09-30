@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text
+from sqlalchemy import Column, Integer, String, Text, Float
 from database import Base
 
 class User(Base):
@@ -14,5 +14,8 @@ class Complaint(Base):
     id = Column(Integer, primary_key=True)
     title = Column(String)
     description = Column(Text)
-    category = Column(String)
+    latitude = Column(Float)
+    longitude = Column(Float)
+    image = Column(String)
     status = Column(String, default="Submitted")
+    done_image = Column(String, nullable=True)
