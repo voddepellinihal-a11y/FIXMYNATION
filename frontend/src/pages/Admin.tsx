@@ -3,18 +3,44 @@ import { useEffect, useState } from "react";
 export default function Admin() {
   const [data, setData] = useState<any[]>([]);
   const [selectedImg, setSelectedImg] = useState<string | null>(null);
+  const [stats, setStats] = useState({ total: 0, pending: 0, inProgress: 0, resolved: 0 });
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    if (localStorage.getItem("role") !== "admin") {
-      alert("Access denied ❌");
-      window.location.href = "/";
-    }
-    load();
+    const checkAdmin = () => {
+      const token = localStorage.getItem("token");
+      const user = localStorage.getItem("user");
+      if (token && user) {
+        const userData = JSON.parse(user);
+        if (userData.email === "admin@fixmynation.com") {
+          setIsAdmin(true);
+          load();
+        } else {
+          alert("Access denied ❌ Admin only");
+          window.location.href = "/";
+        }
+      } else {
+        alert("Please login as admin");
+        window.location.href = "/login";
+      }
+    };
+    checkAdmin();
   }, []);
 
   const load = async () => {
     const res = await fetch("http://127.0.0.1:8000/complaints");
-    setData(await res.json());
+    const complaints = await res.json();
+    setData(complaints);
+    calculateStats(complaints);
+  };
+
+  const calculateStats = (complaints: any[]) => {
+    setStats({
+      total: complaints.length,
+      pending: complaints.filter(c => c.status === "Submitted" || c.status === "Pending").length,
+      inProgress: complaints.filter(c => c.status === "In Progress").length,
+      resolved: complaints.filter(c => c.status === "Resolved").length,
+    });
   };
 
   const updateStatus = async (id: number, status: string) => {
@@ -35,96 +61,154 @@ export default function Admin() {
       body: formData,
     });
 
-    alert("Image updated ✅");
+    alert("Resolution image uploaded ✅");
     load();
   };
 
+  if (!isAdmin) {
+    return (
+      <div className="flex justify-center items-center h-[60vh]">
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
+      </div>
+    );
+  }
+
   return (
-    <div style={{ padding: "20px" }}>
-      <h2>🧑‍💼 Admin Panel</h2>
+    <div className="p-8 max-w-6xl mx-auto">
+      <div className="flex justify-between items-center mb-8">
+        <h2 className="text-3xl font-bold text-blue-900">🧑‍💼 Admin Panel</h2>
+      </div>
 
-      {data.map((c) => {
-        const before = c.image && `http://127.0.0.1:8000/uploads/${c.image}`;
-        const after = c.done_image && `http://127.0.0.1:8000/uploads/${c.done_image}`;
+      {/* STATS CARDS */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="bg-blue-50 p-6 rounded-xl border-l-4 border-blue-500">
+          <h3 className="text-sm font-medium text-blue-700">Total Complaints</h3>
+          <p className="text-3xl font-bold text-blue-900 mt-2">{stats.total}</p>
+        </div>
+        <div className="bg-yellow-50 p-6 rounded-xl border-l-4 border-yellow-500">
+          <h3 className="text-sm font-medium text-yellow-700">Pending</h3>
+          <p className="text-3xl font-bold text-yellow-900 mt-2">{stats.pending}</p>
+        </div>
+        <div className="bg-orange-50 p-6 rounded-xl border-l-4 border-orange-500">
+          <h3 className="text-sm font-medium text-orange-700">In Progress</h3>
+          <p className="text-3xl font-bold text-orange-900 mt-2">{stats.inProgress}</p>
+        </div>
+        <div className="bg-green-50 p-6 rounded-xl border-l-4 border-green-500">
+          <h3 className="text-sm font-medium text-green-700">Resolved</h3>
+          <p className="text-3xl font-bold text-green-900 mt-2">{stats.resolved}</p>
+        </div>
+      </div>
 
-        return (
-          <div key={c.id}
-            style={{
-              background: "#fff",
-              padding: "15px",
-              marginTop: "15px",
-              borderRadius: "10px"
-            }}>
+      {/* COMPLAINTS LIST */}
+      <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+        <div className="p-6 border-b">
+          <h3 className="text-lg font-semibold">All Complaints</h3>
+        </div>
+        <div className="divide-y">
+          {data.map((c) => {
+            const before = c.image && `http://127.0.0.1:8000/uploads/${c.image}`;
+            const after = c.done_image && `http://127.0.0.1:8000/uploads/${c.done_image}`;
 
-            <h3>{c.title}</h3>
-            <p>{c.description}</p>
-            <p><b>Status:</b> {c.status}</p>
+            const getStatusColor = (status: string) => {
+              if (status === "Resolved") return "bg-green-100 text-green-700";
+              if (status === "In Progress") return "bg-yellow-100 text-yellow-700";
+              return "bg-gray-100 text-gray-700";
+            };
 
-            {/* STATUS */}
-            <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
-              <button onClick={() => updateStatus(c.id, "Pending")}>Pending</button>
-              <button onClick={() => updateStatus(c.id, "In Progress")}>Progress</button>
-              <button onClick={() => updateStatus(c.id, "Resolved")}>Resolved</button>
-            </div>
+            return (
+              <div key={c.id} className="p-6 hover:bg-gray-50 transition">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <h3 className="text-lg font-semibold">{c.title}</h3>
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(c.status || "Submitted")}`}>
+                        {c.status || "Submitted"}
+                      </span>
+                    </div>
+                    <p className="text-gray-600 mb-2">{c.description}</p>
+                    <p className="text-sm text-gray-400">📍 {c.latitude}, {c.longitude}</p>
+                  </div>
 
-            {/* SIDE BY SIDE */}
-            <div style={{ display: "flex", gap: "20px", marginTop: "15px" }}>
+                  <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
+                    {/* STATUS BUTTONS */}
+                    <div className="flex gap-2 flex-wrap">
+                      <button
+                        onClick={() => updateStatus(c.id, "Pending")}
+                        className="px-3 py-1.5 text-sm rounded-lg border border-gray-300 hover:bg-gray-100"
+                      >
+                        Pending
+                      </button>
+                      <button
+                        onClick={() => updateStatus(c.id, "In Progress")}
+                        className="px-3 py-1.5 text-sm rounded-lg border border-yellow-400 text-yellow-700 hover:bg-yellow-50"
+                      >
+                        In Progress
+                      </button>
+                      <button
+                        onClick={() => updateStatus(c.id, "Resolved")}
+                        className="px-3 py-1.5 text-sm rounded-lg border border-green-400 text-green-700 hover:bg-green-50"
+                      >
+                        Resolved
+                      </button>
+                    </div>
 
-              <div>
-                <p>Before</p>
-                {before && (
-                  <img
-                    src={before}
-                    onClick={() => setSelectedImg(before)}
-                    style={{ width: "150px", cursor: "pointer" }}
-                  />
-                )}
+                    {/* IMAGES */}
+                    <div className="flex gap-4">
+                      <div>
+                        <p className="text-xs text-gray-500 mb-1">Before</p>
+                        {before && (
+                          <img
+                            src={before}
+                            onClick={() => setSelectedImg(before)}
+                            className="w-24 h-24 object-cover rounded-lg cursor-pointer border"
+                          />
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 mb-1">After</p>
+                        {after ? (
+                          <img
+                            src={after}
+                            onClick={() => setSelectedImg(after)}
+                            className="w-24 h-24 object-cover rounded-lg cursor-pointer border-2 border-green-500"
+                          />
+                        ) : (
+                          <p className="text-sm text-red-500">Not uploaded</p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* UPLOAD RESOLUTION */}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) =>
+                        e.target.files && e.target.files[0] && uploadDone(c.id, e.target.files[0])
+                      }
+                      className="hidden"
+                      id={`upload-${c.id}`}
+                    />
+                    <label
+                      htmlFor={`upload-${c.id}`}
+                      className="px-3 py-1.5 text-sm rounded-lg bg-blue-500 text-white cursor-pointer hover:bg-blue-600"
+                    >
+                      Upload Resolution
+                    </label>
+                  </div>
+                </div>
               </div>
+            );
+          })}
+        </div>
+      </div>
 
-              <div>
-                <p>After</p>
-                {after ? (
-                  <img
-                    src={after}
-                    onClick={() => setSelectedImg(after)}
-                    style={{ width: "150px", cursor: "pointer", border: "2px solid green" }}
-                  />
-                ) : (
-                  <p style={{ color: "red" }}>Not uploaded</p>
-                )}
-              </div>
-
-            </div>
-
-            {/* UPLOAD */}
-            <input
-              type="file"
-              onChange={(e) =>
-                e.target.files && uploadDone(c.id, e.target.files[0])
-              }
-            />
-
-          </div>
-        );
-      })}
-
-      {/* ZOOM */}
+      {/* ZOOM MODAL */}
       {selectedImg && (
         <div
           onClick={() => setSelectedImg(null)}
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            width: "100%",
-            height: "100%",
-            background: "rgba(0,0,0,0.9)",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center"
-          }}
+          className="fixed inset-0 bg-black/90 flex items-center justify-center z-50"
         >
-          <img src={selectedImg} style={{ maxWidth: "90%", maxHeight: "90%" }} />
+          <img src={selectedImg} className="max-w-[90%] max-h-[90%] rounded-lg" />
         </div>
       )}
     </div>

@@ -7,11 +7,17 @@ pipeline {
             steps {
                 echo 'Setting up Python backend...'
 
-                bat '"C:\\Users\\varal\\AppData\\Local\\Python\\pythoncore-3.11-64\\python.exe" -m venv backend\\.venv'
-
-                bat 'backend\\.venv\\Scripts\\python.exe -m pip install --upgrade pip'
-
-                bat 'backend\\.venv\\Scripts\\python.exe -m pip install -r backend\\requirements.txt'
+                script {
+                    if (isUnix()) {
+                        sh 'python3 -m venv backend/.venv'
+                        sh 'backend/.venv/bin/python -m pip install --upgrade pip'
+                        sh 'backend/.venv/bin/python -m pip install -r backend/requirements.txt'
+                    } else {
+                        bat 'python -m venv backend\\.venv'
+                        bat 'backend\\.venv\\Scripts\\python.exe -m pip install --upgrade pip'
+                        bat 'backend\\.venv\\Scripts\\python.exe -m pip install -r backend\\requirements.txt'
+                    }
+                }
             }
         }
 
@@ -19,7 +25,27 @@ pipeline {
             steps {
                 echo 'Installing frontend dependencies...'
 
-                bat 'cd frontend && npm ci'
+                script {
+                    if (isUnix()) {
+                        sh 'cd frontend && npm ci'
+                    } else {
+                        bat 'cd frontend && npm ci'
+                    }
+                }
+            }
+        }
+
+        stage('Frontend Lint') {
+            steps {
+                echo 'Linting frontend code...'
+
+                script {
+                    if (isUnix()) {
+                        sh 'cd frontend && npm run lint'
+                    } else {
+                        bat 'cd frontend && npm run lint'
+                    }
+                }
             }
         }
 
@@ -27,15 +53,27 @@ pipeline {
             steps {
                 echo 'Building React frontend...'
 
-                bat 'cd frontend && npm run build'
+                script {
+                    if (isUnix()) {
+                        sh 'cd frontend && npm run build'
+                    } else {
+                        bat 'cd frontend && npm run build'
+                    }
+                }
             }
         }
 
         stage('Backend Test') {
             steps {
-                echo 'Checking Python backend...'
+                echo 'Running Python backend tests...'
 
-                bat 'backend\\.venv\\Scripts\\python.exe -m compileall backend'
+                script {
+                    if (isUnix()) {
+                        sh 'backend/.venv/bin/python -m pytest backend/ -v'
+                    } else {
+                        bat 'backend\\.venv\\Scripts\\python.exe -m pytest backend/ -v'
+                    }
+                }
             }
         }
 
