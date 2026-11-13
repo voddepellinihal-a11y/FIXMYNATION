@@ -1,0 +1,38 @@
+# Git
+.git
+.gitignore
+
+# Docs / CI
+*.md
+Jenkinsfile
+docs/
+
+# Docker files themselves
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Dependencies and build output
+node_modules
+**/node_modules
+dist
+**/dist
+
+# Python artefacts
+__pycache__
+**/__pycache__
+*.pyc
+.venv
+**/.venv
+
+# Runtime data
+*.db
+uploads/
+**/uploads/
+
+# Editor / OS
+.vscode
+.idea
+.DS_Store
+Thumbs.db
+*.log

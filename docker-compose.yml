@@ -1,0 +1,8 @@
+services:
+  web:
+    build: .
+    image: fixmynation-html:latest
+    container_name: fixmynation-web
+    ports:
+      - "8080:80"
+    restart: unless-stopped

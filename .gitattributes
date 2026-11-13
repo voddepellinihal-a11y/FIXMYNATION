@@ -1,0 +1,9 @@
+# Docker build files must keep LF endings (CRLF breaks the Docker builder).
+Dockerfile text eol=lf
+.dockerignore text eol=lf
+docker-compose.yml text eol=lf
+nginx.conf text eol=lf
+.gitattributes text eol=lf
+
+# Default handling for everything else.
+* text=auto
